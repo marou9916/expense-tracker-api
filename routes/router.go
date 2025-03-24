@@ -8,25 +8,34 @@ import (
 	"github.com/marou9916/expense-tracker-api.git/middlewares"
 )
 
+// SetupRoutes initializes all API routes and returns the Gin router instance.
 func SetupRoutes() *gin.Engine {
 	router := gin.Default()
 
+	// Authentication routes
 	authRoutes := router.Group("/auth")
-	authRoutes.Use(middlewares.JWTRequired())
 	{
+		// User registration endpoint
 		authRoutes.POST("/register", controllers.RegisterHandler)
+		// User login endpoint (returns JWT token)
 		authRoutes.POST("/login", controllers.LoginHandler)
-		authRoutes.POST("/logout", controllers.LogoutHandler)
+		// User logout endpoint (requires valid JWT)
+		authRoutes.POST("/logout", middlewares.JWTRequired(), controllers.LogoutHandler)
+		// Fallback route for undefined authentication endpoints
 		authRoutes.GET("/", func(c *gin.Context) {
-			c.JSON(http.StatusNotFound, gin.H{"erreur": "Page not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Page not found"})
 		})
 	}
 
+	// Expense routes (require user authorization)
 	expenseRoutes := router.Group("/:idUser/expenses")
 	{
-		expenseRoutes.POST("/", controllers.AddExpense)
-		expenseRoutes.GET("/:idExpense", controllers.GetExpense)
-		expenseRoutes.DELETE("/:idExpense", controllers.DeleteExpense)
+		// Add a new expense (requires authorization)
+		expenseRoutes.POST("/", middlewares.CheckUserAuthorization(), controllers.AddExpense)
+		// Get a specific expense by ID (requires authorization)
+		expenseRoutes.GET("/:idExpense", middlewares.CheckUserAuthorization(), controllers.GetExpense)
+		// Delete an expense by ID (requires authorization)
+		expenseRoutes.DELETE("/:idExpense", middlewares.CheckUserAuthorization(), controllers.DeleteExpense)
 	}
 
 	return router
