@@ -10,7 +10,7 @@ func main() {
 	router := routes.SetupRoutes()
 
 	//Initialize database connection
-	database.InitializeDatabase()
+	database.InitializeDatabaseConnection()
 
 	// Start the server on port 8080
 	router.Run(":8080")
