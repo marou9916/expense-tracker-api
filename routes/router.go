@@ -28,7 +28,10 @@ func SetupRoutes() *gin.Engine {
 	}
 
 	// Expense routes (require user authorization)
-	expenseRoutes := router.Group("/:idUser/expenses")
+	expenseRoutes := router.Group("/expenses")
+
+	expenseRoutes.Use(middlewares.JWTRequired())
+
 	{
 		// Add a new expense (requires authorization)
 		expenseRoutes.POST("/", middlewares.CheckUserAuthorization(), controllers.AddExpense)
