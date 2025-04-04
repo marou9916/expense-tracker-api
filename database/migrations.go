@@ -11,8 +11,9 @@ import (
 	_ "github.com/lib/pq" // Driver PostgreSQL
 )
 
+var db *sql.DB
+
 func InitializeDatabaseConnection() {
-	var db *sql.DB
 	//Loading environment file
 	err := godotenv.Load()
 	if err != nil {
@@ -42,8 +43,6 @@ func InitializeDatabaseConnection() {
 	fmt.Println("Succesfully connected to the database...")
 
 	applyMigrations(db)
-
-	fmt.Println("migrations applied...")
 }
 
 func applyMigrations(db *sql.DB) {
