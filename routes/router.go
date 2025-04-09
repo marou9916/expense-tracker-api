@@ -20,7 +20,7 @@ func SetupRoutes() *gin.Engine {
 		// User login endpoint (returns JWT token)
 		authRoutes.POST("/login", controllers.LoginHandler)
 		// User logout endpoint (requires valid JWT)
-		authRoutes.POST("/logout", middlewares.JWTRequired(), controllers.LogoutHandler)
+		// authRoutes.POST("/logout", middlewares.JWTRequired(), controllers.LogoutHandler)
 		// Fallback route for undefined authentication endpoints
 		authRoutes.GET("/", func(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Page not found"})

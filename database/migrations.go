@@ -48,7 +48,7 @@ func InitializeDatabaseConnection() {
 // func applyMigrations(db *sql.DB) {
 
 // 		creationQuery := `
-// 		CREATE TABLE IF NOT EXISTS user (
+// 		CREATE TABLE IF NOT EXISTS users (
 // 	    id_user SERIAL PRIMARY KEY,
 // 	    name_user VARCHAR(50) NOT NULL,
 // 	    email_user VARCHAR(100) UNIQUE NOT NULL,

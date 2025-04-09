@@ -1,17 +1,59 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	"database/sql"
+	"net/http"
 
-// Handlers that handle the user registration/login/logout process.
+	"github.com/gin-gonic/gin"
+	"github.com/marou9916/expense-tracker-api.git/database"
+	"github.com/marou9916/expense-tracker-api.git/models"
+	"github.com/marou9916/expense-tracker-api.git/utils"
+	"golang.org/x/crypto/bcrypt"
+)
+
+// Handlers that handle the user registration/login process.
 func RegisterHandler(c *gin.Context) {
 
 }
 
 func LoginHandler(c *gin.Context) {
+	var input models.LoginInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	var userUUID string
+	var hashedPassword string
+
+	err := database.DB.QueryRow(
+
+		"SELECT id_user_uuid, password_user FROM users WHERE email_user = $1", input.Email,
+	).Scan(&userUUID, &hashedPassword)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email"})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	//Check password
+	if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(input.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid password"})
+		return
+	}
+
+	//Generate JWT
+	tokenString, err := utils.GenerateJWT(userUUID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	//Send it as answer
+	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 
 }
-
-func LogoutHandler(c *gin.Context) {
-
-}
-
