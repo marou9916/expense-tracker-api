@@ -34,11 +34,11 @@ func SetupRoutes() *gin.Engine {
 
 	{
 		// Add a new expense (requires authorization)
-		expenseRoutes.POST("/", middlewares.CheckUserAuthorization(), controllers.AddExpense)
+		expenseRoutes.POST("/", controllers.AddExpense)
 		// Get a specific expense by ID (requires authorization)
-		expenseRoutes.GET("/:idExpense", middlewares.CheckUserAuthorization(), controllers.GetExpense)
+		expenseRoutes.GET("/:idExpense", controllers.GetExpense)
 		// Delete an expense by ID (requires authorization)
-		expenseRoutes.DELETE("/:idExpense", middlewares.CheckUserAuthorization(), controllers.DeleteExpense)
+		expenseRoutes.DELETE("/:idExpense", controllers.DeleteExpense)
 	}
 
 	return router
