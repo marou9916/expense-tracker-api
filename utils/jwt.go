@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"errors"
 	"os"
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 )
@@ -30,4 +32,24 @@ func GenerateJWT(userUUID string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func VerifyJWT(tokenValue string) (string, error) {
+_ = godotenv.Load()
+
+secretKey := os.Getenv("JWT_SECRET")
+
+parser := jwt.NewParser()
+
+token, err := jwt.Parse(tokenValue, func(token *jwt.Token) (interface{}, error) {
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, errors.New("unexpected signing method")
+	}
+	
+	return []byte(secretKey), nil
+})
+
+if err != nil {
+	return "", err
+}
 }

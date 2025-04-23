@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,55 +14,25 @@ import (
 
 // Handlers that handle the user registration/login process.
 func RegisterHandler(c *gin.Context) {
-	var registration models.RegisterInput
+	var user models.User
 
-	if err := c.ShouldBindJSON(&registration); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
+	err := json.NewDecoder(c.Request.Body).Decode(&user)
 
-	if !utils.ValidateInputFormat(registration.Name, registration.Email) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid username or email format"})
-		return
-	}
-
-	if !utils.ValidatePassword(registration.Password) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Password must be at least 8 characters long and contain both letters and digits"})
-		return
-	}
-
-	var existingEmail string
-
-	err := database.DB.QueryRow(
-		"SELECT email_user FROM users WHERE email_user = $1", registration.Email,
-	).Scan(&existingEmail)
-
-	if err != nil && err != sql.ErrNoRows {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-		return
-	}
-
-	if existingEmail != "" {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already used"})
-		return
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registration.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save password"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process the request"})
 		return
 	}
 
 	_, err = database.DB.Exec(
-		"INSERT INTO users(name_user, email_user, password_user) VALUES($1, $2, $3)",
-		registration.Name, registration.Email, string(hashedPassword),
+		"INSERT INTO users(name_user, email_user, password_user) VALUES ($1, $2, $3)", user.Name, user.Email, user.Password,
 	)
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register the request"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "user succesfully registered"})
+	c.JSON(http.StatusOK, gin.H{"message": "User successfully registered"})
 }
 
 func LoginHandler(c *gin.Context) {
@@ -95,10 +66,12 @@ func LoginHandler(c *gin.Context) {
 
 	tokenJWT, err := utils.GenerateJWT(userUUID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to complete login process"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": tokenJWT})
+	c.Header("Authorization", "Bearer "+tokenJWT)
+
+	c.JSON(http.StatusOK, gin.H{"message": "User successfully logged"})
 
 }

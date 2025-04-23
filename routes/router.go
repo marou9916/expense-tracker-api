@@ -16,7 +16,7 @@ func SetupRoutes() *gin.Engine {
 	authRoutes := router.Group("/auth")
 	{
 		// User registration endpoint
-		authRoutes.POST("/register", controllers.RegisterHandler)
+		authRoutes.POST("/register",, controllers.RegisterHandler)
 		// User login endpoint (returns JWT token)
 		authRoutes.POST("/login", controllers.LoginHandler)
 		// User logout endpoint (requires valid JWT)
@@ -40,6 +40,8 @@ func SetupRoutes() *gin.Engine {
 		// Delete an expense by ID (requires authorization)
 		expenseRoutes.DELETE("/:idExpense", controllers.DeleteExpense)
 	}
+
+	router.GET("/me", middlewares.JWTRequired(), controllers.GetCurrentUser)
 
 	return router
 }
