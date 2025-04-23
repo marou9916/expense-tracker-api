@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,17 +13,23 @@ import (
 
 // Handlers that handle the user registration/login process.
 func RegisterHandler(c *gin.Context) {
-	var user models.User
+	userInput, exists := c.Get("userInput")
 
-	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected middleware failure"})
+		return
+	}
 
+	input := userInput.(models.RegisterInput)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password),  bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process the request"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error":"Unexpected error during registration process"})
 		return
 	}
 
 	_, err = database.DB.Exec(
-		"INSERT INTO users(name_user, email_user, password_user) VALUES ($1, $2, $3)", user.Name, user.Email, user.Password,
+		"INSERT INTO users(name_user, email_user, password_user) VALUES ($1, $2, $3)", input.Name, input.Email, string(hashedPassword),
 	)
 
 	if err != nil {
@@ -36,18 +41,20 @@ func RegisterHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
-	var input models.LoginInput
+	userInput, exists := c.Get("userInput")
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected middleware failure"})
 		return
 	}
+
+	input := userInput.(models.LoginInput)
 
 	var userUUID string
 	var hashedPassword string
 
 	err := database.DB.QueryRow(
-		"SELECT id_user_uuid password_user FROM users WHERE email_user = $1", input.Email,
+		"SELECT id_user_uuid, password_user FROM users WHERE email_user = $1", input.Email,
 	).Scan(&userUUID, &hashedPassword)
 
 	if err == sql.ErrNoRows {
@@ -59,6 +66,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(input.Password))
+
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid password"})
 		return

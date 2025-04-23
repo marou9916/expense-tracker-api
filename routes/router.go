@@ -16,9 +16,9 @@ func SetupRoutes() *gin.Engine {
 	authRoutes := router.Group("/auth")
 	{
 		// User registration endpoint
-		authRoutes.POST("/register",, controllers.RegisterHandler)
+		authRoutes.POST("/register", middlewares.ValidateInputFormat("register"), controllers.RegisterHandler)
 		// User login endpoint (returns JWT token)
-		authRoutes.POST("/login", controllers.LoginHandler)
+		authRoutes.POST("/login", middlewares.ValidateInputFormat("login"), controllers.LoginHandler)
 		// User logout endpoint (requires valid JWT)
 		// authRoutes.POST("/logout", middlewares.JWTRequired(), controllers.LogoutHandler)
 		// Fallback route for undefined authentication endpoints
