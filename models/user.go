@@ -20,9 +20,9 @@ func (u *User) AddExpense(expense Expense) error {
 	return err
 }
 
-func (u *User) DeleteExpense(expense Expense) error {
+func (u *User) DeleteExpense(expense Expense, uuid string) error {
 	_, err := database.DB.Exec(
-		"DELETE * FROM expense WHERE description_expense = $1", expense.Description,
+		"DELETE FROM expense WHERE description_expense = $1 AND id_user_uuid = $2", expense.Description, uuid,
 	)
 
 	return err
